@@ -22,9 +22,17 @@ You need to be on a **desktop computer** running a modern browser like Chrome, F
 
 ## Safety
 
-I made this for my own benefit, and although I've done the bare minimum to test that it works, it will probably randomly break at some point. If you need help, try posting at <reddit thread pending>.
+### It doesn't work?
 
-Be warned that installing untrusted userscripts can endanger your data, and give hackers control over your browser. I promise that my code isn't malicious, but I'm not responsible for anything that happens as a result of your using it. If you don't trust me (and you're not able to read through my spaghetti code and verify that it's safe), then don't use it.
+I made this for my own benefit, and although I've done the bare minimum to test that it works, it will probably randomly break at some point. If you need help, try posting at [this Reddit thread](https://www.reddit.com/r/Target/comments/17bmpwu/quickly_add_your_shifts_to_your_calendar/)
+
+### Is this a virus?
+  
+Installing untrusted userscripts can endanger your data, and give hackers control over your browser. I promise that my code isn't malicious, but I'm not responsible for anything that happens as a result of your using it. If you don't trust me (and you're not able to read through my spaghetti code and verify that it's safe), then don't use it.
+
+### Will I get in trouble for using this?
+
+Probably not. It's just reading data from your browser, and doesn't interact with the backend whatsoever.
 
 ## Legalese
 
