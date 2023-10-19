@@ -2,12 +2,12 @@
 // @name        Target myTime schedule parser
 // @description Generates Calendar files from Target's schedule app
 // @namespace   Violentmonkey Scripts
-// @match       https://mytime.target.com/schedule
+// @match       https://mytime.target.com/*
 // @grant       GM_registerMenuCommand
 // @version     1.0
 // @author      -
 // @require https://cdn.jsdelivr.net/npm/@violentmonkey/dom@2
-// @require https://raw.githubusercontent.com/nwcell/ics.js/master/ics.deps.min.js
+// @require https://raw.githubusercontent.com/nwcell/ics.js/dfec67f37a3c267b3f97dd229c9b6a3521222794/ics.deps.min.js
 // ==/UserScript==
 
 const allShifts = new Map();
@@ -87,10 +87,6 @@ const disconnect = VM.observe(document.querySelector('#root'), () => {
   if (currentDay0 != document.getElementById("0")) {
     currentDay0 = document.getElementById("0");
     scanSchedule();
-    if (currentCount != allShifts.size) {
-      currentCount = allShifts.size;
-      setTimeout(promptICSFile); // do prompt in a timeout so it doesn't block rendering
-    }
   }
 });
 
