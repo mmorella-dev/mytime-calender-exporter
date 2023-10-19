@@ -2,9 +2,13 @@
 
 ![Calendar screenshot](https://user-images.githubusercontent.com/4561733/276445296-27d35c11-f49d-46df-8c05-7067836a6c38.png)
 
+If you're a burnt out team member like me, you cannot stand the thought of wasting precious seconds every week manually typing all your shifts into your calendar. It would be much faster to spend 3 hours writing and debugging a program to do it for you. Well, look no further. Bear with me, this might get a little technical.
+
 This is a [userscript](https://en.wikipedia.org/wiki/Userscript) for Target's myTime portal. It converts your shift schedule to an [ICS file](https://en.wikipedia.org/wiki/ICalendar) containing all your scheduled shifts in a given week, which you can quickly import to your Calendar.
 
 ## How to use
+
+You need to be on a **desktop computer** running a modern browser like Chrome, Firefox, or Edge.
 
 1. Install the [ViolentMonkey](https://violentmonkey.github.io/get-it/) browser extension
 2. Install [mytime_parser.user.js](https://gist.github.com/morellam-dev/eafe2c23cea634f390c35aeacc92ada5/raw/mytime_parser.user.js)
@@ -27,3 +31,5 @@ Be warned that installing untrusted userscripts can endanger your data, and give
 This project is unaffiliated and unsupported by Target Corporation.
 
 This software is provided as-is, without warranty of any kind, express or implied, including but not limited to the warranties of merchantability, fitness for a particular purpose, or non-infringement.
+  
+!["Automation" from XKCD](https://imgs.xkcd.com/comics/automation.png)
