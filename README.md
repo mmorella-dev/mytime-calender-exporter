@@ -2,7 +2,7 @@
 
 ![Calendar screenshot](https://user-images.githubusercontent.com/4561733/276445296-27d35c11-f49d-46df-8c05-7067836a6c38.png)
 
-If you're a burnt out team member like me, you cannot stand the thought of wasting precious seconds every week manually typing all your shifts into your calendar. It would be much faster to spend 3 hours writing and debugging a program to do it for you. Well, look no further. Bear with me, this might get a little technical.
+If you're a burnt out TM like me, you cannot stand the thought of wasting precious minutes every week manually typing all your shifts into your calendar. It would be much faster to spend 3 hours writing and debugging a program to do it for you. Well, look no further.
 
 This is a [userscript](https://en.wikipedia.org/wiki/Userscript) for Target's myTime portal. It converts your shift schedule to an [ICS file](https://en.wikipedia.org/wiki/ICalendar) containing all your scheduled shifts in a given week, which you can quickly import to your Calendar.
 
