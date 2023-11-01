@@ -5,7 +5,7 @@
 // @match       https://mytime.target.com/*
 // @grant       GM.registerMenuCommand
 // @grant       GM.unregisterMenuCommand
-// @version     1.1
+// @version     2.0
 // @author      -
 // @require https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js
 // @require https://raw.githubusercontent.com/zachbornheimer/ics.js/zachbornheimer-uid-manipulation/ics.js
