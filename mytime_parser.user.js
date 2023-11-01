@@ -3,46 +3,98 @@
 // @description Generates Calendar files from Target's schedule app
 // @namespace   Violentmonkey Scripts
 // @match       https://mytime.target.com/*
-// @grant       GM_registerMenuCommand
+// @grant       GM.registerMenuCommand
+// @grant       GM.unregisterMenuCommand
 // @version     1.1
 // @author      -
-// @require https://cdn.jsdelivr.net/npm/@violentmonkey/dom@2
-// @require https://raw.githubusercontent.com/nwcell/ics.js/dfec67f37a3c267b3f97dd229c9b6a3521222794/ics.deps.min.js
+// @require https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js
+// @require https://raw.githubusercontent.com/zachbornheimer/ics.js/zachbornheimer-uid-manipulation/ics.js
 // ==/UserScript==
 
-/** @typedef {{ job: string, location: string, startDate: Date, endDate: Date, naiveDate: string }} Shift */
+
+
+//////////////////////////
+// USER INTERFACE
+//////////////////////////
+
+const promptICSFile = () => {
+  try {
+    // parse the week
+    let shifts = getWeekSchedule();
+    if (shifts.length <= 0) {
+      return; // fail silently
+    }
+    const message = `Download ICS file for ${shifts.length} shifts?`;
+    const shiftList = shifts
+      .map((s) => ` • ${s.displayDate} at ${s.displayTime}`)
+      .join("\n");
+    if (!window.confirm(`${message}\n\n${shiftList}`)) {
+      return;
+    }
+    const filename = `Target Shifts week of ${shifts[0]?.displayDate}`;
+    makeICSFile(filename, shifts);
+  } catch (e) {
+    console.error(e);
+    alert(e);
+  }
+};
+
+// Observe changes to the DOM and enable or disable the command
+const observeChanges = () => {
+  const rootEl = document.querySelector("#root");
+  if (!rootEl) {
+    throw new Error("#root is undefined");
+  }
+  const callback = (mutations) => {
+    // check if the change was to replace the week view
+    // (avoids duplicate prompts)
+    if (
+      mutations.some((r) =>
+        [...r.addedNodes.values()].map(e => e.id).includes("scrollableContainer")
+      && document.getElementById("0")
+        )
+    ) {
+      setTimeout(promptICSFile); // invoke in a closure so we don't block render
+    }
+  };
+  const observer = new MutationObserver(callback);
+  const observerOptions = {
+    subtree: true,
+    childList: true,
+  };
+  observer.observe(rootEl, observerOptions);
+};
+
+observeChanges();
+
+/** @typedef {{ job: string, location: string, startDate: Date, endDate: Date, displayDate: string, displayTime: string }} Shift */
 /** @typedef {[year: number, monthIndex: number, day: number ]} DateComponents */
 /** @typedef {[hour: number, minute: number ]} TimeComponents */
 
-/** The expression used to parse shift labels. This is gonna break if Target modifies the frontend. */
-const SHIFT_LABEL_REGEX =
-  /^(.+) shift from (.+) to (.+) at location (.+) on (.+)\. Click to view daily view/;
-
-/** @type {Map<string, Shift>} */
-const allShifts = new Map();
-
-/** Populates allShifts with values from the DOM */
-const scanSchedule = () => {
+/**
+ * @returns {Shift[]}
+ */
+const getWeekSchedule = () => {
+  const shifts = [];
   for (let i = 0; i < 7; i++) {
-    // <div id="0" aria-label="schedule for 2023-12-31 with 1 shifts">
-    const scheduleEl = document.getElementById(`${i}`);
     // there's a numeric ID for each day of the week. weird but helpful.
-    if (!scheduleEl) {
-      break;
+    /** <div id="0" aria-label="schedule for 2023-12-31 with 1 shifts"> */
+    const scheduleEl = document.getElementById(`${i}`);
+    if (scheduleEl === null) {
+      throw new Error(
+        "No schedule elements found. Make sure you're on the weekly view!"
+      );
     }
-    const dayLabel = scheduleEl.getAttribute("aria-label");
+    const scheduleLabel = scheduleEl.getAttribute("aria-label") ?? "!";
     // <a aria-label="Tech shift from 05:00PM to 10:00PM on Monday October 12. Click to view daily view">
     const shiftEls = scheduleEl.querySelectorAll(`a[aria-label*="shift from"]`);
     for (const shiftEl of shiftEls) {
-      const shiftLabel = shiftEl.getAttribute("aria-label");
-      if (shiftLabel && !allShifts.has(shiftLabel)) {
-        // @ts-ignore
-        const shift = parseShift(dayLabel, shiftLabel);
-        allShifts.set(shiftLabel, shift);
-      }
+      const shiftLabel = shiftEl.getAttribute("aria-label") ?? "!";
+      const shift = parseShift(scheduleLabel, shiftLabel);
+      shifts.push(shift);
     }
   }
-  console.debug(allShifts);
+  return shifts;
 };
 
 /**
@@ -51,16 +103,16 @@ const scanSchedule = () => {
  * @returns {Shift} */
 const parseShift = (scheduleLabel, shiftLabel) => {
   const date = parseDate(scheduleLabel);
-  const { job, startTime, endTime, naiveDate, location } =
+  const { job, startTime, endTime, displayDate, location, displayTime } =
     parseShiftLabel(shiftLabel);
   const startDate = new Date(...date, ...startTime);
   const endDate = new Date(...date, ...endTime);
-  if (startDate.toString() === "Invalid Date" || endDate.toString() === "Invalid Date") {
+  if (!startDate.valueOf() || !endDate.valueOf()) {
     console.error([...date, ...startTime]);
     console.error([...date, ...endTime]);
-    throw new Error(`Error parsing dates`);
+    throw new Error(`Error parsing dates.`);
   }
-  return { job, location, startDate, endDate, naiveDate };
+  return { job, location, startDate, endDate, displayDate, displayTime };
 };
 
 /**
@@ -96,49 +148,41 @@ const parseTime = (time) => {
 
 /**
  * @param {string} label aria-label value of the form "Tech shift from 05:00PM to 10:00PM on Monday October 12. Click to view daily view"
- * @returns {{ job: string, location: string, startTime: TimeComponents, endTime: TimeComponents, naiveDate: string }}
  */
 const parseShiftLabel = (label) => {
+  const SHIFT_LABEL_REGEX =
+    /^(.+) shift from (.+) to (.+) at location (.+) on (.+)\. Click to view daily view/;
   const matches = label.match(SHIFT_LABEL_REGEX);
   if (matches?.length !== 6) {
     console.error(matches);
     throw new Error(`Couldn't parse shift info from \`${label}\``);
   }
-  const [, job, start, end, location, naiveDate ] = matches;
+  const [, job, start, end, location, displayDate] = matches;
+  const displayTime = `${start}–${end}`;
   const startTime = parseTime(start);
   const endTime = parseTime(end);
-  return { job, location, startTime, endTime, naiveDate };
+  return { job, location, startTime, endTime, displayDate, displayTime };
 };
 
-let currentDay0 = document.getElementById("0");
-let currentCount = allShifts.size;
+///////////////////////////////////////////////////////////////////
+// ICS file creation
+///////////////////////////////////////////////////////////////////
 
-// Watch the DOM for changes
-// @ts-ignore
-const disconnect = VM.observe(document.querySelector("#root"), () => {
-  // check that the week has been replaced
-  if (currentDay0 != document.getElementById("0")) {
-    currentDay0 = document.getElementById("0");
-    try {
-      scanSchedule();
-    } catch (e) {
-      alert(e);
-    }
+/** @param {Shift[]} shifts
+ * @param {string} filename The name of the ICS file to output (no suffix)
+ */
+const makeICSFile = (filename, shifts) => {
+  if (!shifts?.length) {
+    throw new Error("No shifts found for this week. Maybe a parse error?");
   }
-});
-
-/** @param {Iterable<Shift>} shifts */
-const makeICSFile = (shifts) => {
-  if (!shifts) {
-    window.alert("No shifts found for this week. Maybe a parse error?");
-    return;
-  }
+  let weekStart = shifts[0]?.displayDate;
+  // generate a hash for the given week and use it as the UID.
+  // annoying hack to circumvent the ICS library's weird UID generation
+  const uidDomain = getUIDDomain(shifts);
   // @ts-ignore
-  const cal = ics();
-  let lastDate;
+  const calendar = ics(uidDomain);
   for (const s of shifts) {
-    lastDate = s.naiveDate;
-    cal.addEvent(
+    calendar.addEvent(
       `${s.job} shift`,
       ``,
       `Target #${s.location}`,
@@ -146,22 +190,31 @@ const makeICSFile = (shifts) => {
       s.endDate
     );
   }
-  cal.download(`Target Shifts as of ${lastDate}`);
-  // alert("Not implemented yet!");
+  console.debug(calendar);
+  calendar.download(filename);
 };
 
-const promptICSFile = () => {
-  if (!window.confirm(`Download ICS file for ${allShifts.size} shifts?`)) {
-    return;
+/**
+ * Returns a hash code from a string
+ * @param  {String} str The string to hash.
+ * @return {Number}    A 32bit integer
+ * @see http://werxltd.com/wp/2010/05/13/javascript-implementation-of-javas-string-hashcode-method/
+ */
+const hashCode = (str) => {
+  let hash = 0;
+  for (let i = 0, len = str.length; i < len; i++) {
+    let chr = str.charCodeAt(i);
+    hash = (hash << 5) - hash + chr;
+    hash |= 0; // Convert to 32bit integer
   }
-  try {
-    makeICSFile(allShifts.values());
-  } catch (e) {
-    alert(e);
-  }
+  return hash;
 };
 
-// @ts-ignore
-GM_registerMenuCommand("Export ICS file", promptICSFile);
-
-scanSchedule();
+/**
+ * Returns a consistent hash for a whole week of shifts.
+ * If any shift changes, this will produce a new, unique set of shifts.
+ */
+const getUIDDomain = (shifts) => {
+  let obj = shifts.map((o) => JSON.stringify(o)).join(',');
+  return hashCode(obj);
+};
