@@ -14,9 +14,9 @@ You need to be on a **desktop computer** running a modern browser like Chrome, F
 2. Install [mytime_parser.user.js](https://gist.github.com/morellam-dev/eafe2c23cea634f390c35aeacc92ada5/raw/mytime_parser.user.js)
 3. Log into <https://mytime.target.com/schedule>
    * ‼️ You need to be on the **Weekly Schedule** view for it to work. Open the **☰ Sidebar** and then press **Schedule**.
-4. Use the left and right arrows at the top to scroll through all the weeks you want to download.
-5. Click on TamperMonkey's icon in your browser's toolbar, and then click Export ICS file
-6. Import the file to your calendar app of choice.
+4. The script will automatically prompt you to download an ICS files for all the shifts in a given week.
+5. Use the left and right arrows at the top to scroll through all the weeks you want to download.
+6. Import the resulting file(s) to your calendar app of choice.
    * [How to import events to Google Calendar](https://support.google.com/calendar/answer/37118?hl=en&co=GENIE.Platform%3DDesktop)
    * [Import or export calendars on Mac](https://support.apple.com/guide/calendar/import-or-export-calendars-icl1023/mac)
 
